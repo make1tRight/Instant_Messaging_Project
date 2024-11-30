@@ -3,7 +3,7 @@
 
 ## 登录及聊天界面展示
 
-![login](.\login.png)
+![login](./login.png)
 
 ![chatlogin](./chatlogin.png)
 
