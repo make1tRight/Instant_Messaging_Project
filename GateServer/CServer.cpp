@@ -1,27 +1,26 @@
 #include "CServer.h"
+#include "HttpConnection.h"
 #include <iostream>
 
 CServer::CServer(boost::asio::io_context& ioc, unsigned short& port)
-    : _ioc(ioc), _socket(ioc), _acceptor(ioc, tcp::endpoint(tcp::v4(), port))  {
-
+    : _ioc(ioc), _acceptor(ioc, tcp::endpoint(tcp::v4(), port)), _socket(ioc) {
+    std::cout << "this is CServer() construct" << std::endl; 
 }
 
 void CServer::Start() {
     auto self = shared_from_this();
-
-    _acceptor.async_accept([&self](const boost::system::error_code& ec) {
+    _acceptor.async_accept(_socket, [self](beast::error_code ec) {
         try {
             if (ec) {
                 self->Start();
                 return;
             }
-
-            // session->start();
+            std::make_shared<HttpConnection>(std::move(self->_socket))->Start();
             self->Start();
         }
         catch (std::exception& e) {
-            std::cout << "Exception: " << e.what() << std::endl;
-            self->Start();
+            std::cout << "CServer::Start() Exception: " << e.what() << std::endl;
+            // self->Start();
         }
     });
 }

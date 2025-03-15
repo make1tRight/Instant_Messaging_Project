@@ -1,6 +1,9 @@
+#ifndef CSERVER_H
+#define CSERVER_H
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
 #include <boost/beast/http.hpp>
+#include <memory>
 
 namespace beast = boost::beast;
 namespace net = boost::asio;
@@ -16,3 +19,4 @@ private:
     net::io_context& _ioc;
     tcp::socket _socket;
 };
+#endif // CSERVER_H
