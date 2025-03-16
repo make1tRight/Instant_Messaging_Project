@@ -1,3 +1,0 @@
-/home/tom/workspace/Feynman/GateServer/build/CMakeFiles/GateServer.dir
-/home/tom/workspace/Feynman/GateServer/build/CMakeFiles/edit_cache.dir
-/home/tom/workspace/Feynman/GateServer/build/CMakeFiles/rebuild_cache.dir

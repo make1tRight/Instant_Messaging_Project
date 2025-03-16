@@ -1,1 +1,0 @@
-/usr/bin/c++ -g CMakeFiles/GateServer.dir/CServer.cpp.o CMakeFiles/GateServer.dir/GateServer.cpp.o CMakeFiles/GateServer.dir/HttpConnection.cpp.o CMakeFiles/GateServer.dir/LogicSystem.cpp.o -o GateServer  -ljsoncpp 
