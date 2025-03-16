@@ -33,7 +33,7 @@ make
 ./GateServer
 ```
 
-# debug
+# Debug
 - `bad_weak_ptr` 错误 -> 继承忘记加public
 1. 使用`shared_from_this()`方法的类
     - 必须使用`std::shared_ptr<T>`进行管理
