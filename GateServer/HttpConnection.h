@@ -20,6 +20,7 @@ private:
     void CheckDeadline();
     void HandleRequest();
     void WriteResponse();
+    void PreParseGetParam();
     tcp::socket _socket;
     beast::flat_buffer _buffer{8192};
     http::request<http::dynamic_body> _request;
@@ -27,5 +28,7 @@ private:
     asio::steady_timer _deadline{
         _socket.get_executor(), std::chrono::seconds(60)
     };
+    std::string _url_string;
+    std::map<std::string, std::string> _get_params;
 };
 #endif // HTTPCONNECTION_H

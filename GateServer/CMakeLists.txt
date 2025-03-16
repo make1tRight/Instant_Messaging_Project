@@ -5,6 +5,8 @@ project(GateServer)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_BUILD_TYPE Debug)
 
+# find_package(jsoncpp REQUIRED)
+
 # 添加可执行文件和源文件
 file(GLOB
     SOURCES
@@ -18,4 +20,11 @@ target_include_directories(
     GateServer
     PRIVATE 
     ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+# 链接相关库
+target_link_libraries(
+    GateServer 
+    PRIVATE
+    jsoncpp
 )

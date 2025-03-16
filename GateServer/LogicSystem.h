@@ -14,7 +14,10 @@ public:
     ~LogicSystem();
     bool HandleGet(std::string path,
          std::shared_ptr<HttpConnection> conn);
+    bool HandlePost(std::string path,
+         std::shared_ptr<HttpConnection> conn);    
     void RegisterGet(std::string url, HttpHandler handler);
+    void RegisterPost(std::string url, HttpHandler handler);
 private:
     LogicSystem();
     std::unordered_map<std::string, HttpHandler> _get_handler;
