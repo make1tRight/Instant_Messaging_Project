@@ -6,10 +6,19 @@
 ## 网络层
 ### CServer
 1. 负责监听新的客户连接+分发连接
+2. 通过iocontext实现, iocontext底层调用epoll
 
 ### HttpConnection
 1. 负责读写, 将结果提交至逻辑队列
 2. 根据http请求Get/Post, 分发到逻辑系统中进行处理
+
+### IOContextPool
+IOContext连接池, 用于提升并发性能, 改善处理http连接的效率
+1. 根据CPU核数封装线程数
+    - 线程数少于CPU核数, 可能使CPU出现空闲的核心造成资源浪费
+    - 线程数多于CPU核数, 可能出现多线程竞争1核心的情况, 多了时间片分配和线程上下文切换的开销
+2. CServer从池中取出iocontext, 用完放回不释放
+    - 避免在使用过程中iocontext因频繁构造和释放影响性能
 
 ## 逻辑层
 ### LogicSystem
@@ -25,6 +34,8 @@
 1. 将配置信息统一写在config.ini中
 2. 配置管理类统一读取并设置对应参数
 
+## 数据访问层
+
 ## gRPC通信
 ### VarifyGrpcClient
 1. VarifyGrpcClient通过gRPC与验证服务进行通信(获取验证码)
@@ -38,7 +49,9 @@ cd GateServer
 sh ./build
 
 # 2. 启动
-./build/GateServer
+# 直接启动current_path不对读不到config.ini
+cd build
+./GateServer
 ```
 
 # Debug

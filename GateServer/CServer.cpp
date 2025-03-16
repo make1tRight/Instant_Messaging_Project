@@ -1,21 +1,24 @@
 #include "CServer.h"
 #include "HttpConnection.h"
 #include <iostream>
+#include "AsioIOContextPool.h"
 
 CServer::CServer(boost::asio::io_context& ioc, unsigned short& port)
     : _ioc(ioc), _acceptor(ioc, tcp::endpoint(tcp::v4(), port)), _socket(ioc) {
-    std::cout << "this is CServer() construct" << std::endl; 
+
 }
 
 void CServer::Start() {
     auto self = shared_from_this();
-    _acceptor.async_accept(_socket, [self](beast::error_code ec) {
+    auto& ioc = AsioIOContextPool::GetInstance()->GetIOContext();
+    auto new_conn = std::make_shared<HttpConnection>(ioc);
+    _acceptor.async_accept(_socket, [self, new_conn](beast::error_code ec) {
         try {
             if (ec) {
                 self->Start();
                 return;
             }
-            std::make_shared<HttpConnection>(std::move(self->_socket))->Start();
+            new_conn->Start();
             self->Start();
         }
         catch (std::exception& e) {

@@ -56,8 +56,8 @@ std::string UrlDecode(const std::string& str) {
     return return_str;
 }
 
-HttpConnection::HttpConnection(tcp::socket socket)
-     : _socket(std::move(socket)) {
+HttpConnection::HttpConnection(asio::io_context& ioc)
+     : _socket(ioc) {
 
 }
 
