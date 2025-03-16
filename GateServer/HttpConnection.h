@@ -16,6 +16,7 @@ class HttpConnection : public std::enable_shared_from_this<HttpConnection> {
 public:
     HttpConnection(asio::io_context& ioc);
     void Start();
+    tcp::socket& GetSocket();
 private:
     void CheckDeadline();
     void HandleRequest();

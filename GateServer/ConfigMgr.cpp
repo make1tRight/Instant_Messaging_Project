@@ -71,18 +71,6 @@ ConfigMgr::~ConfigMgr() {
     _config_map.clear();
 }
 
-ConfigMgr::ConfigMgr(const ConfigMgr& rhs) {
-    _config_map = rhs._config_map;
-}
-    
-ConfigMgr& ConfigMgr::operator=(const ConfigMgr& rhs) {
-    if (&rhs == this) {
-        return *this;
-    }
-    _config_map = rhs._config_map;
-    return *this;
-}
-
 SectionInfo ConfigMgr::operator[](const std::string& key) {
     auto it = _config_map.find(key);
     if (it == _config_map.end()) {

@@ -8,6 +8,7 @@
 1. 负责监听新的客户连接+分发连接
 2. 通过iocontext实现, iocontext底层调用epoll
 
+
 ### HttpConnection
 1. 负责读写, 将结果提交至逻辑队列
 2. 根据http请求Get/Post, 分发到逻辑系统中进行处理
@@ -33,6 +34,7 @@ IOContext连接池, 用于提升并发性能, 改善处理http连接的效率
 ### ConfigMgr
 1. 将配置信息统一写在config.ini中
 2. 配置管理类统一读取并设置对应参数
+3. 配置有全局不变性, 实现为单例模式
 
 ## 数据访问层
 
@@ -64,3 +66,7 @@ cd build
 1. 使用gRPC要包含Protobuf, utf8_range库
     1. gRPC依赖protobuf进行序列化
     2. protobuf需要utf8编码, 需要utf8_range库
+## `http read error, code: Bad file descriptor`
+1. HttpConnection进行读写的时候socket已经关闭
+    - `async_accept`要从HttpConnection内部获取socket
+    - 保证HttpConnection在进行读写处理的时候socket不会关闭

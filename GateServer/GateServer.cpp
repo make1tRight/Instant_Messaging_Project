@@ -5,8 +5,8 @@
 
 int main() {
     try {
-        ConfigMgr cfg;
-        std::string gate_port_str = cfg["GateServer"]["Port"];
+        auto cfg = ConfigMgr::GetInstance();
+        std::string gate_port_str = (*cfg)["GateServer"]["Port"];
         unsigned short gate_port = atoi(gate_port_str.c_str());
         asio::io_context ioc{1};
 

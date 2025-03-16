@@ -12,7 +12,7 @@ void CServer::Start() {
     auto self = shared_from_this();
     auto& ioc = AsioIOContextPool::GetInstance()->GetIOContext();
     auto new_conn = std::make_shared<HttpConnection>(ioc);
-    _acceptor.async_accept(_socket, [self, new_conn](beast::error_code ec) {
+    _acceptor.async_accept(new_conn->GetSocket(), [self, new_conn](beast::error_code ec) {
         try {
             if (ec) {
                 self->Start();

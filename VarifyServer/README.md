@@ -26,3 +26,8 @@
 2. 定义供外部调用的GetVarifyCode
     1. 生成uuid
     2. 调用email.js中的SendMail方法
+
+# Debug
+## 邮件无法发送, 返回RPC_FAILED错误
+- 发邮件不能开代理, 否则端口会被重定向到7890去
+- 不是50051无法和验证服务正常通讯
