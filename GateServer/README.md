@@ -25,12 +25,10 @@
 ```bash
 # 1. 编译
 cd GateServer
-mkdir build && cd build
-cmake ..
-make
+sh ./build
 
 # 2. 启动
-./GateServer
+./build/GateServer
 ```
 
 # Debug
