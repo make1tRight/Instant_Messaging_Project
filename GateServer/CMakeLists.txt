@@ -5,12 +5,16 @@ project(GateServer)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_BUILD_TYPE Debug)
 
-# find_package(jsoncpp REQUIRED)
+find_package(Boost REQUIRED COMPONENTS filesystem)
+find_package(Protobuf REQUIRED)
+find_package(gRPC CONFIG REQUIRED)
+find_package(utf8_range REQUIRED)
 
 # 添加可执行文件和源文件
 file(GLOB
     SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/*.cc
 )
 
 add_executable(GateServer ${SOURCES})
@@ -20,6 +24,8 @@ target_include_directories(
     GateServer
     PRIVATE 
     ${CMAKE_CURRENT_SOURCE_DIR}
+    ${Boost_INCLUDE_DIRS}
+    ${Protobuf_INCLUDE_DIRS}
 )
 
 # 链接相关库
@@ -27,4 +33,9 @@ target_link_libraries(
     GateServer 
     PRIVATE
     jsoncpp
+    ${Boost_LIBRARIES}
+    ${Protobuf_LIBRARIES}
+    gRPC::grpc++
+    utf8_range::utf8_range
+    utf8_range::utf8_validity
 )

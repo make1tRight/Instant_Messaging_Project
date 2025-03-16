@@ -20,6 +20,16 @@
     1. `/get_test` Get请求处理(get报文测试, 可删除)
     2. `/get_varifycode` Post请求处理(获取验证码请求)
 
+## 配置管理层
+### ConfigMgr
+1. 将配置信息统一写在config.ini中
+2. 配置管理类统一读取并设置对应参数
+
+## gRPC通信
+### VarifyGrpcClient
+1. VarifyGrpcClient通过gRPC与验证服务进行通信(获取验证码)
+2. message.proto定义了各服务通信所需要的方法(req returns rsp)
+
 
 # 使用方法
 ```bash
@@ -32,8 +42,12 @@ sh ./build
 ```
 
 # Debug
-- `bad_weak_ptr` 错误 -> 继承忘记加public
+## `bad_weak_ptr` 错误 -> 继承忘记加public
 1. 使用`shared_from_this()`方法的类
     - 必须使用`std::shared_ptr<T>`进行管理
     - 必须继承`public std::enable_shared_from_this<T>`
 2. 以上两条如果缺少, 会出现`bad_weak_ptr`的exception
+## gRPC的编译问题
+1. 使用gRPC要包含Protobuf, utf8_range库
+    1. gRPC依赖protobuf进行序列化
+    2. protobuf需要utf8编码, 需要utf8_range库

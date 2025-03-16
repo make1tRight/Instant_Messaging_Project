@@ -1,6 +1,7 @@
 #include "LogicSystem.h"
-#include "HttpConnection.h"
 #include "const.h"
+#include "HttpConnection.h"
+#include "VarifyGrpcClient.h"
 #include <jsoncpp/json/json.h>
 #include <jsoncpp/json/value.h>
 #include <jsoncpp/json/reader.h>
@@ -35,9 +36,10 @@ LogicSystem::LogicSystem() {
             return;
         }
         auto email = root_src["email"].asString();
+        GetVarifyRsp rsp = VarifyGrpcClient::GetInstance()->GetVarifyCode(email);
         std::cout << "email: " << email << std::endl;
         root["email"] = email;
-        root["error"] = ERROR_CODES::SUCCESS;
+        root["error"] = rsp.error();
         std::string jsonstr = root.toStyledString();
         beast::ostream(conn->_response.body()) << jsonstr;
     });
