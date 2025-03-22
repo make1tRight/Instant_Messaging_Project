@@ -36,6 +36,7 @@ target_link_libraries(
     ${Boost_LIBRARIES}
     ${Protobuf_LIBRARIES}
     gRPC::grpc++
+    hiredis
     utf8_range::utf8_range
     utf8_range::utf8_validity
 )

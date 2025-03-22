@@ -35,8 +35,27 @@ IOContext连接池, 用于提升并发性能, 改善处理http连接的效率
 1. 将配置信息统一写在config.ini中
 2. 配置管理类统一读取并设置对应参数
 3. 配置有全局不变性, 实现为单例模式
+4. 已加入配置信息(config.ini)
+    1. 网关服务Port
+    2. 验证服务IP与Port
+    3. Redis的IP, Port和Passwd
 
 ## 数据访问层
+### RedisMgr
+1. 封装RedisConnPool用于管理与redis的连接
+    1. redis连接基于TCP/IP, 每次创建连接都需要握手+AUTH
+    2. 通过预先启动多个连接的方式, 建立好与redis的连接, 加快业务处理效率
+    3. Defer机制保证程序运行过程中可正确归还Redis连接到池中
+2. 已实现Redis指令
+    1. `Connect`
+    2. `Auth`
+    3. `Get`和`HGet`
+    4. `Set`和`HSet`
+    5. `LPush`和`RPush`
+    6. `LPop`和`RPop`
+    7. `Del`
+    8. `ExistsKey`
+3. 实现redis功能测试函数`void TestRedis()`于main.cpp中
 
 ## gRPC通信
 ### VarifyGrpcClient
