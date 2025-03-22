@@ -8,6 +8,7 @@
 ## config.json
 - 读取配置
     1. 邮箱授权码
+    2. redis登录信息
 
 ## const.js
 - 存储常量和全局变量
@@ -20,6 +21,10 @@
 
 ## email.js
 - 异步发送邮件, 失败则reject, 成功则resolve
+
+## redis.js
+1. 建立varifyserver和redis的连接
+2. `SetRedisExpire`将发送出去的验证码缓存到redis中并设置过期时间
 
 ## server.js
 1. 启动grpc server
