@@ -29,6 +29,7 @@ IOContext连接池, 用于提升并发性能, 改善处理http连接的效率
 4. 主要逻辑说明:
     1. `/get_test` Get请求处理(get报文测试, 可删除)
     2. `/get_varifycode` Post请求处理(获取验证码请求)
+    3. `/user_register` 用户注册(将用户信息加入到MySQL数据库中)
 
 ## 配置管理层
 ### ConfigMgr
@@ -56,6 +57,15 @@ IOContext连接池, 用于提升并发性能, 改善处理http连接的效率
     7. `Del`
     8. `ExistsKey`
 3. 实现redis功能测试函数`void TestRedis()`于main.cpp中
+
+### MysqlMgr
+1. 封装Dao层用于进行CRUD操作以及脚本运行
+    1. 封装Dao层可在后期代码维护的时候将SQL换成其他数据库
+    2. Dao允许多个服务模块调用相同的数据访问接口
+2. 封装MySQL连接池管理MySQL连接
+3. MysqlMgr内部调用Dao层
+4. 已实现MySQL指令
+    1. `CALL reg_user(?,?,?,@result)` 执行reg_user.sql脚本用于注册新用户
 
 ## gRPC通信
 ### VarifyGrpcClient
@@ -89,3 +99,33 @@ cd build
 1. HttpConnection进行读写的时候socket已经关闭
     - `async_accept`要从HttpConnection内部获取socket
     - 保证HttpConnection在进行读写处理的时候socket不会关闭
+## reg_user运行错误返回`-1`
+1. 捕捉并输出对应的错误信息
+```sql
+-- ...
+    -- 声明变量来捕获错误信息
+    DECLARE error_message VARCHAR(255);
+    -- 如果在执行过程中遇到任何错误，则回滚事务
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        -- 捕获错误并设置错误信息
+        GET DIAGNOSTICS CONDITION 1 error_message = MESSAGE_TEXT;
+        SET result = -1;
+        -- 输出错误信息
+        SELECT CONCAT('Error occurred: ', error_message) AS ErrorMessage;
+-- ...
+```
+2. `Illegal mix of collations`错误表示在执行查询时，字符集或排序规则 (collation) 的不一致导致操作失败。
+```bash
+mysql> CALL reg_user('xxxx' COLLATE utf8mb4_unicode_ci, 'xxxx@example.com' COLLATE utf8mb4_unicode_ci, 'mypassword' COLLATE utf8mb4_unicode_ci, @result);
++-----------------------------------------------------------------------------------------------------------------------------+
+| ErrorMessage                                                                                                                |
++-----------------------------------------------------------------------------------------------------------------------------+
+| Error occurred: Illegal mix of collations (utf8mb4_unicode_ci,IMPLICIT) and (utf8mb4_0900_ai_ci,IMPLICIT) for operation '=' |
++-----------------------------------------------------------------------------------------------------------------------------+
+1 row in set (0.00 sec)
+```
+3. 修改表的字符集和排序规则(有时间找一下修改指令的做法, 随意调整表结构不妥)
+```sql
+ALTER TABLE `user` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
+```

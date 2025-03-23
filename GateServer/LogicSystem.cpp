@@ -1,10 +1,12 @@
 #include "LogicSystem.h"
 #include "const.h"
+#include "RedisMgr.h"
 #include "HttpConnection.h"
 #include "VarifyGrpcClient.h"
 #include <jsoncpp/json/json.h>
 #include <jsoncpp/json/value.h>
 #include <jsoncpp/json/reader.h>
+#include <MysqlMgr.h>
 
 LogicSystem::LogicSystem() {
     RegisterGet("/get_test", [](std::shared_ptr<HttpConnection> conn) {
@@ -43,6 +45,76 @@ LogicSystem::LogicSystem() {
         std::string jsonstr = root.toStyledString();
         beast::ostream(conn->_response.body()) << jsonstr;
     });
+
+    RegisterPost("/user_register", [](std::shared_ptr<HttpConnection> conn) {
+        auto body_str = beast::buffers_to_string(conn->_request.body().data());
+        std::cout << "body string: " << body_str << std::endl;
+        conn->_response.set(http::field::content_type, "text/json");
+        Json::Value root;
+        Json::Reader reader;
+        Json::Value src_root;
+        bool success = reader.parse(body_str, src_root);
+        // json有误
+        if (!success) {
+            std::cout << "Failed to parse JSON data." << std::endl;
+            root["error"] = ERROR_CODES::JSON_ERROR;
+            std::string jsonstr = root.toStyledString();
+            beast::ostream(conn->_response.body()) << jsonstr;
+            return;
+        }
+        std::string email = src_root["email"].asString();
+        std::string name = src_root["user"].asString();
+        std::string passwd = src_root["passwd"].asString();
+        std::string confirm = src_root["confirm"].asString();
+        if (passwd != confirm) {
+            std::cout << "password error." << std::endl;
+            root["error"] = ERROR_CODES::PASSWD_ERR;
+            std::string jsonstr = root.toStyledString();
+            beast::ostream(conn->_response.body()) << jsonstr;
+            return;
+        }
+
+        std::string varifycode = "";
+        // 验证码过期
+        bool b_get_varifycode = RedisMgr::GetInstance()->Get(CODEPREFIX + email, varifycode);
+        if (!b_get_varifycode) {
+            std::cout << "Code expired." << std::endl;
+            root["error"] = ERROR_CODES::VARIFY_EXPIRED;
+            std::string jsonstr = root.toStyledString();
+            beast::ostream(conn->_response.body()) << jsonstr;
+            return;
+        }
+        // 验证码错误
+        if (varifycode != src_root["varifycode"].asString()) {
+            std::cout << "Code error." << std::endl;
+            root["error"] = ERROR_CODES::VARIFY_CODE_ERROR;
+            std::string jsonstr = root.toStyledString();
+            beast::ostream(conn->_response.body()) << jsonstr;
+            return;
+        }
+        
+        // 用户已存在
+        int uid = MysqlMgr::GetInstance()->UserRegister(name, email, passwd);
+        if (uid == 0 || uid == -1) {
+            std::cout << "User exists." << std::endl;
+            root["error"] = ERROR_CODES::USER_EXIST;
+            std::string jsonstr = root.toStyledString();
+            beast::ostream(conn->_response.body()) << jsonstr;
+            return;
+        }
+
+        root["error"] = 0;
+        root["uid"] = uid;
+        root["email"] = email;
+        root["user"] = name;
+        root["passwd"] = passwd;
+        root["confirm"] = confirm;
+        root["varifycode"] = src_root["varifycode"].asString();
+        std::string jsonstr = root.toStyledString();
+        beast::ostream(conn->_response.body()) << jsonstr;
+        return;
+    });
+
 }
 
 LogicSystem::~LogicSystem() {

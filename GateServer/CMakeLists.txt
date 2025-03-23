@@ -37,6 +37,7 @@ target_link_libraries(
     ${Protobuf_LIBRARIES}
     gRPC::grpc++
     hiredis
+    mysqlcppconn
     utf8_range::utf8_range
     utf8_range::utf8_validity
 )
