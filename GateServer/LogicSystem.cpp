@@ -115,6 +115,69 @@ LogicSystem::LogicSystem() {
         return;
     });
 
+    RegisterPost("/reset_pwd", [](std::shared_ptr<HttpConnection> conn) {
+        auto body_str = beast::buffers_to_string(conn->_request.body().data());
+        std::cout << "body str: " << body_str << std::endl;
+        conn->_response.set(http::field::content_type, "text/json");
+        Json::Value root;
+        Json::Reader reader;
+        Json::Value src_root;
+        bool parse_success = reader.parse(body_str, src_root);
+        if (!parse_success) {
+            std::cout << "Failed to parse JSON data." << std::endl;
+            root["error"] = ERROR_CODES::JSON_ERROR;
+            std::string jsonstr = root.toStyledString();
+            beast::ostream(conn->_response.body()) << jsonstr;
+            return;
+        }
+
+        std::string varifycode;
+        std::string email = src_root["email"].asString();
+        bool b_get_varifycode = RedisMgr::GetInstance()->Get(CODEPREFIX + email, varifycode);
+        if (!b_get_varifycode) {
+            std::cout << "Get varify code error." << std::endl;
+            root["error"] = ERROR_CODES::VARIFY_EXPIRED;
+            std::string jsonstr = root.toStyledString();
+            beast::ostream(conn->_response.body()) << jsonstr;
+            return;
+        }
+        if (varifycode != src_root["varifycode"].asString()) {
+            std::cout << "Varify code error." << std::endl;
+            root["error"] = ERROR_CODES::VARIFY_CODE_ERROR;
+            std::string jsonstr = root.toStyledString();
+            beast::ostream(conn->_response.body()) << jsonstr;
+            return;
+        }
+
+        std::string name = src_root["user"].asString();
+        bool email_valid = MysqlMgr::GetInstance()->CheckEmail(name, email);
+        if (!email_valid) {
+            std::cout << "User email not match" << std::endl;
+            root["error"] = ERROR_CODES::EMAIL_NOT_MATCH;
+            std::string jsonstr = root.toStyledString();
+            beast::ostream(conn->_response.body()) << jsonstr;
+            return;
+        }
+
+        std::string passwd = src_root["passwd"].asString();
+        bool b_update = MysqlMgr::GetInstance()->UpdatePwd(name, passwd);
+        if (!b_update) {
+            std::cout << "Failed to update password" << std::endl;
+            root["error"] = ERROR_CODES::PWD_UPDATE_FAILED;
+            std::string jsonstr = root.toStyledString();
+            beast::ostream(conn->_response.body()) << jsonstr;
+            return;
+        }
+        
+        std::cout << "Update password success" << std::endl;
+        root["error"] = 0;
+        root["user"] = name;
+        root["email"] = email;
+        root["passwd"] = passwd;
+        root["varifycode"] = src_root["varifycode"].asString();
+        std::string jsonstr = root.toStyledString();
+        beast::ostream(conn->_response.body()) << jsonstr;
+    });
 }
 
 LogicSystem::~LogicSystem() {

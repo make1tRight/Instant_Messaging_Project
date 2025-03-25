@@ -30,6 +30,7 @@ IOContext连接池, 用于提升并发性能, 改善处理http连接的效率
     1. `/get_test` Get请求处理(get报文测试, 可删除)
     2. `/get_varifycode` Post请求处理(获取验证码请求)
     3. `/user_register` 用户注册(将用户信息加入到MySQL数据库中)
+    4. `/reset_pwd` 修改密码逻辑(根据name找到pwd并进行update)
 
 ## 配置管理层
 ### ConfigMgr
@@ -66,6 +67,8 @@ IOContext连接池, 用于提升并发性能, 改善处理http连接的效率
 3. MysqlMgr内部调用Dao层
 4. 已实现MySQL指令
     1. `CALL reg_user(?,?,?,@result)` 执行reg_user.sql脚本用于注册新用户
+    2. `SELECT email FROM user WHERE name = ?` 查找用户邮箱
+    3. `UPDATE user SET pwd = ? WHERE name = ?`更新密码
 
 ## gRPC通信
 ### VarifyGrpcClient

@@ -109,3 +109,60 @@ int MysqlDao::UserRegister(const std::string& name,
     }
 }
 
+bool MysqlDao::CheckEmail(const std::string& name, const std::string& email) {
+    auto conn = _pool->GetConnection();
+    try {
+        if (conn == nullptr) {
+            return false;
+        }
+        std::unique_ptr<sql::PreparedStatement> stmt(
+            conn->prepareStatement("SELECT email FROM user WHERE name = ?"));
+        stmt->setString(1, name);
+        std::unique_ptr<sql::ResultSet> res(stmt->executeQuery());
+        
+        while (res->next()) {
+            std::cout << "Check email: " << res->getString("email") << std::endl;
+            if (email != res->getString("email")) {
+                _pool->ReturnConnection(std::move(conn));
+                return false;
+            }
+            _pool->ReturnConnection(std::move(conn));
+            return true;
+        }
+        return false;
+    }
+    catch (sql::SQLException& e) {
+        _pool->ReturnConnection(std::move(conn));
+        std::cerr << "SQLException: " << e.what();
+        std::cerr << " (MySQL error code: " << e.getErrorCode();
+        std::cerr << ", SQLState: " << e.getSQLState() << " )." << std::endl;
+        return false;
+    }
+}
+
+bool MysqlDao::UpdatePwd(const std::string& name, const std::string& pwd) {
+    auto conn = _pool->GetConnection();
+    try {
+        if (conn == nullptr) {
+            return false;
+        }
+        std::unique_ptr<sql::PreparedStatement> pstmt(
+            conn->prepareStatement("UPDATE user SET pwd = ? WHERE name = ?"));
+        pstmt->setString(2, name);
+        pstmt->setString(1, pwd);
+        
+        int update_count = pstmt->executeUpdate();
+        std::cout << "Update rows: " << update_count << std::endl;
+        std::cout << "new password: " << pwd << std::endl;
+        _pool->ReturnConnection(std::move(conn));
+        return true;
+    }
+    catch (sql::SQLException& e) {
+        _pool->ReturnConnection(std::move(conn));
+        std::cerr << "SQLException: " << e.what();
+        std::cerr << " (MySQL error code: " << e.getErrorCode();
+        std::cerr << ", SQLState: " << e.getSQLState() << " )." << std::endl;
+        return false;
+    }
+}
+
