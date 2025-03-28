@@ -3,6 +3,7 @@
 #include "RedisMgr.h"
 #include "HttpConnection.h"
 #include "VarifyGrpcClient.h"
+#include "StatusGrpcClient.h"
 #include <jsoncpp/json/json.h>
 #include <jsoncpp/json/value.h>
 #include <jsoncpp/json/reader.h>
@@ -177,6 +178,56 @@ LogicSystem::LogicSystem() {
         root["varifycode"] = src_root["varifycode"].asString();
         std::string jsonstr = root.toStyledString();
         beast::ostream(conn->_response.body()) << jsonstr;
+    });
+
+    RegisterPost("/user_login", [](std::shared_ptr<HttpConnection> conn) {
+        std::string body_str = beast::buffers_to_string(conn->_request.body().data());
+        std::cout << "body_str: " << body_str << std::endl;
+        conn->_response.set(http::field::content_type, "text/json");
+
+        Json::Value src_root;
+        Json::Reader reader;
+        Json::Value root;
+        bool parse_success =  reader.parse(body_str, src_root);
+        if (!parse_success) {
+            std::cout << "Failed to parse JSON data." << std::endl;
+            root["error"] = ERROR_CODES::JSON_ERROR;
+            std::string jsonstr = root.toStyledString();
+            beast::ostream(conn->_response.body()) << jsonstr;
+            return;
+        }
+
+        std::string email = src_root["email"].asString();
+        std::string passwd = src_root["passwd"].asString();
+        UserInfo userinfo;
+        bool pwd_valid =  MysqlMgr::GetInstance()->CheckPwd(email, passwd, userinfo);
+        if (!pwd_valid) {
+            std::cout << "Email and password do not match." << std::endl;
+            root["error"] = ERROR_CODES::PASSWD_INVALID;
+            std::string jsonstr = root.toStyledString();
+            beast::ostream(conn->_response.body()) << jsonstr;
+            return;
+        }
+        
+        auto reply = StatusGrpcClient::GetInstance()->GetChatServer(userinfo._uid);
+        if (reply.error()) {
+            std::cout << "Failed to get ChatServer by gRPC, error: " 
+                << reply.error() << std::endl;
+            root["error"] = ERROR_CODES::RPC_FAILED;
+            std::string jsonstr = root.toStyledString();
+            beast::ostream(conn->_response.body()) << jsonstr;
+            return;
+        }
+        std::cout << "Success to load userinfo, uid: " << userinfo._uid << std::endl;
+        root["error"] = 0;
+        root["email"] = email;
+        root["uid"] = userinfo._uid;
+        root["token"] = reply.token();
+        root["host"] = reply.host();
+        root["port"] = reply.port();
+        std::string jsonstr = root.toStyledString();
+        beast::ostream(conn->_response.body()) << jsonstr;
+        return;
     });
 }
 
