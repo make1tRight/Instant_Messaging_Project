@@ -1,4 +1,4 @@
-# ChatRoom
+# Instant_Messaging_Project
 Instant messaging project in Linux
 ## 开发背景
 1. 提供高效实时的沟通平台
