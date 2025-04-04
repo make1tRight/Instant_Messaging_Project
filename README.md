@@ -9,4 +9,5 @@
 状态服务 - 实现负载均衡, 查询负载更低的聊天服务信息(ip+port+token)用于客户端建立tcp长连接
 
 ## ChatServer
+### 分为ChatServer1和ChatServer2
 聊天服务 - 用于建立tcp长连接, 主要面向好友申请, 好友认证, 消息转发等功能
