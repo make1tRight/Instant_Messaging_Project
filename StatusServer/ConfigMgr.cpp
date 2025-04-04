@@ -45,7 +45,7 @@ ConfigMgr::ConfigMgr() {
         const std::string& section_name = section_pair.first;
         const boost::property_tree::ptree& section_tree = section_pair.second;
 
-        std::unordered_map<std::string, std::string> section_config;
+        std::map<std::string, std::string> section_config;
         for (const auto& key_value_pair : section_tree) {
             const std::string& key = key_value_pair.first;
             const std::string& value = 

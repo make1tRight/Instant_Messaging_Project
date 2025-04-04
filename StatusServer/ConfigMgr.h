@@ -2,21 +2,17 @@
 #define CONFIGMGR_H
 #include "Singleton.h"
 #include <string>
-#include <unordered_map>
+#include <map>
 
 struct SectionInfo {
 public:
     SectionInfo();
-
     ~SectionInfo();
-
     SectionInfo(const SectionInfo& rhs);
-    
     SectionInfo& operator=(const SectionInfo& rhs);
-
     std::string operator[](const std::string& key) const;
 public:
-    std::unordered_map<std::string, std::string> _section_data;
+    std::map<std::string, std::string> _section_data;
 };
 
 
@@ -29,6 +25,6 @@ private:
     ConfigMgr();
     ConfigMgr(const ConfigMgr&) = delete;
     ConfigMgr& operator=(const ConfigMgr&) = delete;
-    std::unordered_map<std::string, SectionInfo> _config_map;
+    std::map<std::string, SectionInfo> _config_map;
 };
 #endif // CONFIGMGR_H

@@ -3,6 +3,7 @@
 #include <grpcpp/grpcpp.h>
 #include "message.grpc.pb.h"
 #include <string>
+#include <mutex>
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -13,9 +14,18 @@ using message::GetChatServerReq;
 using message::GetChatServerRsp;
 using message::StatusService;
 
+using message::LoginReq;
+using message::LoginRsp;
+
 struct ChatServer {
+    ChatServer();
+    ChatServer(const ChatServer& cs);
+    ChatServer& operator=(const ChatServer& cs);
+
     std::string _host;
     std::string _port;
+    std::string _name;
+    int _conn_count;
 };
 
 class StatusServiceImpl final : public StatusService::Service {
@@ -24,11 +34,12 @@ public:
 
     virtual Status GetChatServer(ServerContext* context,
          const GetChatServerReq* request, GetChatServerRsp* response) override;
-public:
-    std::vector<ChatServer> _servers;
-    int _server_index;
+    virtual Status Login(ServerContext* context,
+         const LoginReq* request, LoginRsp* response) override;
+private:
+    void insertToken(int uid, std::string token);
+    ChatServer getChatServer();
+    std::unordered_map<std::string, ChatServer> _servers;
+    std::mutex _mutex;
 };
-
-
-
 #endif // STATUSSERVICEIMPL_H
