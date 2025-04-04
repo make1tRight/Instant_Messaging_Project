@@ -11,7 +11,7 @@
 
 ### HttpConnection
 1. 负责读写, 将结果提交至逻辑队列
-2. 根据http请求Get/Post, 分发到逻辑系统中进行处理
+2. 解析http请求(Get/Post), 内部调用逻辑系统进行处理
 
 ### IOContextPool
 IOContext连接池, 用于提升并发性能, 改善处理http连接的效率
@@ -23,7 +23,7 @@ IOContext连接池, 用于提升并发性能, 改善处理http连接的效率
 
 ## 逻辑层
 ### LogicSystem
-1. 负责将逻辑队列中的消息取出, 根据消息id, 选择对应回调函数进行处理
+1. 根据URL请求解析结果选择对应回调函数进行处理
 2. 采用注册-处理机制来管理http连接请求, 不管请求类型怎么增加, 都不需要改变代码结构
 3. unordered_map实现了O(1)查找时间复杂度
 4. 主要逻辑说明:
@@ -31,6 +31,8 @@ IOContext连接池, 用于提升并发性能, 改善处理http连接的效率
     2. `/get_varifycode` Post请求处理(获取验证码请求)
     3. `/user_register` 用户注册(将用户信息加入到MySQL数据库中)
     4. `/reset_pwd` 修改密码逻辑(根据name找到pwd并进行update)
+5. 不需要使用消息队列的原因
+    1. 服务器在收到HTTP请求后立即解析, 响应, 返回, 整个过程同步完成(瞬时任务)
 
 ## 配置管理层
 ### ConfigMgr
@@ -68,8 +70,8 @@ IOContext连接池, 用于提升并发性能, 改善处理http连接的效率
 4. 已实现MySQL指令
     1. `CALL reg_user(?,?,?,@result)` 执行reg_user.sql脚本用于注册新用户
     2. `SELECT email FROM user WHERE name = ?` 查找用户邮箱
-    3. `UPDATE user SET pwd = ? WHERE name = ?`更新密码
-
+    3. `UPDATE user SET pwd = ? WHERE name = ?` 更新密码
+    4. `"SELECT * FROM user WHERE email = ?"` 检查密码是否正确
 ## gRPC通信
 ### VarifyGrpcClient
 1. VarifyGrpcClient通过gRPC与验证服务进行通信(获取验证码)
