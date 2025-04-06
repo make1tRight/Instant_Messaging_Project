@@ -45,6 +45,7 @@ public:
     std::shared_ptr<UserInfo> GetUser(std::string name);
 
     bool AddFriendApply(const int& from, const int& to);
+    bool AddFriend(const int& from, const int& to, std::string backname);
     bool GetApplyList(int touid, 
          std::vector<std::shared_ptr<ApplyInfo>>& apply_list, int begin, int limit = 10);
     bool GetFriendList(int self_id,

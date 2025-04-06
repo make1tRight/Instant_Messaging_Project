@@ -13,6 +13,7 @@ using message::AuthFriendReq;
 using message::AuthFriendRsp;
 using message::TextChatMsgReq;
 using message::TextChatMsgRsp;
+using message::TextChatData;
 
 class UserInfo;
 class ChatServiceImpl final : public ChatService::Service {

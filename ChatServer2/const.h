@@ -6,6 +6,7 @@
 #define CODEPREFIX "code_"
 #define USER_TOKEN_PREFIX "utoken_"
 #define USER_BASE_INFO "ubaseinfo_"
+#define NAME_INFO "nameinfo_"
 #define LOGIN_COUNT "logincount"
 #define USER_IP_PREFIX  "uip_"
 
@@ -35,7 +36,19 @@ enum ERROR_CODES {
 
 enum MSG_IDS {
     MSG_CHAT_LOGIN_REQ = 1005,          //用户登录请求
-    MSG_CHAT_LOGIN_RSP = 1006,          //用户登录回报
+    MSG_CHAT_LOGIN_RSP = 1006,          //用户登录回包
+    ID_SEARCH_USER_REQ = 1007,          //用户搜索请求
+    ID_SEARCH_USER_RSP = 1008,          //用户搜索回包
+    ID_ADD_FRIEND_REQ = 1009,           //好友申请请求
+    ID_ADD_FRIEND_RSP = 1010,           //好友申请回包
+    ID_NOTIFY_ADD_FRIEND_REQ = 1011,    //通知用户添加好友申请
+
+    ID_AUTH_FRIEND_REQ = 1013,          //好友认证请求
+    ID_AUTH_FRIEND_RSP = 1014,          //好友认证回包
+    ID_NOTIFY_AUTH_FRIEND_REQ = 1015,   //通知用户认证好友申请
+    ID_TEXT_CHAT_MSG_REQ = 1017,        //聊天文本发送请求
+    ID_TEXT_CHAT_MSG_RSP = 1018,        //聊天文本发送回包
+    ID_NOTIFY_TEXT_CHAT_MSG_REQ = 1019, //通知用户有聊天消息到来
 };
 
 class Defer {

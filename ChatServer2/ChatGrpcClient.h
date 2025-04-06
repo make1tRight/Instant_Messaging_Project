@@ -11,6 +11,8 @@
 #include "Singleton.h"
 #include <jsoncpp/json/json.h>
 using grpc::Channel;
+using grpc::ClientContext;
+using grpc::Status;
 
 using message::ChatService;
 using message::AddFriendReq;
@@ -19,6 +21,7 @@ using message::AuthFriendReq;
 using message::AuthFriendRsp;
 using message::TextChatMsgReq;
 using message::TextChatMsgRsp;
+using message::TextChatData;
 
 
 class UserInfo;
@@ -54,6 +57,6 @@ public:
 
 private:
     ChatGrpcClient();
-    std::unordered_map<std::string, std::unique_ptr<ChatConnPool>> _pool;
+    std::unordered_map<std::string, std::unique_ptr<ChatConnPool>> _pools;
 };
 #endif // CHATGRPCCLIENT_H

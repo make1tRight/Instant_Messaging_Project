@@ -310,6 +310,53 @@ bool MysqlDao::AddFriendApply(const int& from, const int& to) {
     }
 }
 
+bool MysqlDao::AddFriend(const int& from, const int& to, std::string backname) {
+    auto conn = _pool->GetConnection();
+    if (conn == nullptr) {
+        return false;
+    }
+    Defer defer([this, &conn]() {
+        _pool->ReturnConnection(std::move(conn));
+    });
+    try {
+        // 开始事务
+        conn->setAutoCommit(false);
+        std::unique_ptr<sql::PreparedStatement> pstmt1(conn->prepareStatement(
+            "INSERT IGNORE INTO friend(self_id, friend_id, back) VALUES (?, ?, ?)"));
+        pstmt1->setInt(1, from);
+        pstmt1->setInt(2, to);
+        pstmt1->setString(3, backname);
+        int rowAffected = pstmt1->executeUpdate();
+        if (rowAffected < 0) {
+            conn->rollback();
+            return false;
+        }
+        std::unique_ptr<sql::PreparedStatement> pstmt2(conn->prepareStatement(
+            "INSERT IGNORE INTO friend(self_id, friend_id, back) VALUES (?, ?, ?)"));
+        pstmt2->setInt(1, to);
+        pstmt2->setInt(2, from);
+        pstmt2->setString(3, "");
+        rowAffected = pstmt2->executeUpdate();
+        if (rowAffected < 0) {
+            conn->rollback();
+            return false;
+        }
+        // 提交事务
+        conn->commit();
+        std::cout << "AddFriend called success." << std::endl;
+        return true;
+    }
+    catch (sql::SQLException& e) {
+        if (conn) {
+            conn->rollback();
+        }
+        std::cerr << "SQLException: " << e.what();
+        std::cerr << " (MySQL error code: " << e.getErrorCode();
+        std::cerr << ", SQLState: " << e.getSQLState() << " )." << std::endl;
+        return false;
+    }
+}
+
 bool MysqlDao::GetApplyList(int touid, 
     std::vector<std::shared_ptr<ApplyInfo>>& apply_list, int begin, int limit) {
     auto conn = _pool->GetConnection();

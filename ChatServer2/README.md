@@ -33,6 +33,22 @@ IOContext连接池, 用于提升并发性能, 改善处理每个session的tcp连
 3. unordered_map实现了O(1)查找时间复杂度
 4. 主要逻辑说明:
     1. `void LoginHandler` 处理用户登录逻辑
+        1. 获取当前用户数据信息, 先查缓存, 缓存中没有才访问数据库
+        2. 数据库中拉取好友申请列表
+        3. 数据库中拉取联系人列表
+        4. 更新缓存中服务活跃的用户数量
+    2. `void AddFriendApply` 处理好友申请
+        1. 如果接收方用户处于同一服务且在线则直接通过tcp发送请求
+        2. 如果接收方用户处于不同服务则通过grpc通知对应服务
+        3. 好友申请的持久化
+    3. `void AuthFriendApply` 处理好友认证
+        1. 发送给认证方客户端的回包
+        2. 如果发出好友申请的用户处于同一服务且在线则直接通过tcp发送认证方的信息并提示认证通过
+        3. 如果接收方用户处于不同服务则通过grpc通知对应服务
+    4. `void DealChatTextMsg` 处理消息文本的发送
+        1. 如果接收方用户处于同一服务且在线则直接通过tcp发送聊天消息
+        2. 如果接收方用户处于不同服务则先通过grpc通知对应服务
+        3. 将消息展示给自己, 用于调试
 5. 与网关服务逻辑层的区别
     1. 只有1个工作线程
         1. 避免竞态条件
@@ -78,19 +94,30 @@ IOContext连接池, 用于提升并发性能, 改善处理每个session的tcp连
     2. Dao允许多个服务模块调用相同的数据访问接口
 2. 封装MySQL连接池管理MySQL连接
 3. MysqlMgr内部调用Dao层
-4. 已实现MySQL指令
-    1. `"SELECT * FROM friend WHERE self_id = ?"` 获取当前用户的所有好友信息
-    2. `"SELECT apply.from_uid, apply.status, user.name, user.nick, user.sex FROM friend_apply AS apply JOIN user ON apply.from_uid = user.uid WHERE apply.to_uid = ? AND apply.id > ? ORDER BY apply.id ASC LIMIT ? "` 获取好友申请列表, 按friend_apply的id列升序排列
-    3. `"INSERT INTO friend_apply (from_uid, to_uid) values (?, ?) ON DUPLICATE KEY UPDATE from_uid = from_uid, to_uid = to_uid"` 新增好友申请
-    4. `"SELECT * FROM user WHERE uid = ?"` 通过uid获取用户信息
-    5. `"SELECT * FROM user WHERE name = ?"` 通过name获取用户信息
+    1. 已实现MySQL指令
+        1. `"SELECT * FROM friend WHERE self_id = ?"` 获取当前用户的所有好友信息
+        2. `"SELECT apply.from_uid, apply.status, user.name, user.nick, user.sex FROM friend_apply AS apply JOIN user ON apply.from_uid = user.uid WHERE apply.to_uid = ? AND apply.id > ? ORDER BY apply.id ASC LIMIT ? "` 获取好友申请列表, 按friend_apply的id列升序排列
+        3. `"INSERT INTO friend_apply (from_uid, to_uid) values (?, ?) ON DUPLICATE KEY UPDATE from_uid = from_uid, to_uid = to_uid"` 新增好友申请
+        4. `"SELECT * FROM user WHERE uid = ?"` 通过uid获取用户信息
+        5. `"SELECT * FROM user WHERE name = ?"` 通过name获取用户信息
+        6. `INSERT IGNORE INTO friend(self_id, friend_id, back) VALUES (?, ?, ?)` 更新好友关系(一对好友关系用了两条记录)
+5. 先查缓存Redis后查MySQL降低数据库压力
 
 ## gRPC通信
-### ChatGrpcClient和ChatServiceImpl
-1. ChatGrpcClient是聊天双方的gRPC接收端
-2. ChatServiceImpl是聊天双方的gRPC发送端
-
-### StatusGrpcClient
+### ChatConnPool
+实现`ChatConnPool` grpc连接池用于提升grpc连接的并发性能
+1. 每个gRPC客户端都使用多个stub组织成的队列来管理
+2. stub由同一个channel创建, 底层是同一个tcp连接(HTTP/2支持多路复用)
+### ChatGrpcClient
+聊天双方的gRPC接收端
+1. `NotifyAddFriend` 通过gRPC发送"添加好友申请"到接收方所在服务
+2. `NotifyAuthFriend` 通过gRPC发送"认证通过"到接收方所在服务
+3. `NotifyTextChatMsg` 通过gRPC发送消息文本到接收方所在服务
+### ChatServiceImpl
+聊天双方的gRPC发送端
+1. `NotifyAddFriend` 判断用户是否在内存中, 存在则通过tcp连接发送通知给新好友的客户端
+2. `NotifyAuthFriend` 用户在线则调用session->Send通过tcp连接发送好友认证成功的通知给好友申请方
+3. `NotifyTextChatMsg` 用户在线则调用session->Send通过tcp连接发送通知给消息接收方的客户端
 
 
 
