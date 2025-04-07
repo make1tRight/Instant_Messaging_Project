@@ -1,5 +1,5 @@
 # ChatRoom
-Instant messaging project in Linux
+Instant messaging project in Linux  
 From llfc
 ## 开发背景
 1. 提供高效实时的沟通平台
