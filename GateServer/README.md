@@ -134,3 +134,5 @@ mysql> CALL reg_user('xxxx' COLLATE utf8mb4_unicode_ci, 'xxxx@example.com' COLLA
 ```sql
 ALTER TABLE `user` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 ```
+
+## 连接多了会阻塞, 重启后能够自动接收消息
