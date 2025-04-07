@@ -49,6 +49,7 @@ IOContext连接池, 用于提升并发性能, 改善处理每个session的tcp连
         1. 如果接收方用户处于同一服务且在线则直接通过tcp发送聊天消息
         2. 如果接收方用户处于不同服务则先通过grpc通知对应服务
         3. 将消息展示给自己, 用于调试
+        4. 为了确保消息的唯一性, 客户端生成了uuid作为消息的id
 5. 与网关服务逻辑层的区别
     1. 只有1个工作线程
         1. 避免竞态条件
@@ -153,5 +154,24 @@ Error:  "The proxy type is invalid for this operation"
 Other Error!
 ```
 3. 关闭主机代理可解决以上问题
+
+## 客户端无法接收界面切换信号
+1. `CSession::Send`逻辑没有实现
+    1. 通过打印日志+tcpdump(linux)+wireshark(windows)排查
+
+## 好友申请确认后无法添加到联系人
+1. `AuthFriendApply`逻辑没有实现
+    1. 通过业务逻辑检查数据库状态位
+2. `int friend_id = res->getInt("friend_id");` 获取错了数据类型
+
+## 消息无法发送到对端
+`std::string to_ip_key = USER_IP_PREFIX + std::to_string(touid);`查错了key
+
+## 头像无法显示(客户端)
+
+## 程序关闭的时候显示core dump
+
+
+
 
 

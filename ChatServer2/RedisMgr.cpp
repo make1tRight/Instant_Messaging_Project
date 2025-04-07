@@ -25,6 +25,7 @@ RedisConnPool::RedisConnPool(std::size_t poolSize, const char* host,
         if (reply->type == REDIS_REPLY_ERROR) {
             std::cout << "Authentication failed." << std::endl;
             freeReplyObject(reply);
+            redisFree(conn);
             continue;
         }
 

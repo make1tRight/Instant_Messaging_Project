@@ -95,7 +95,7 @@ void LogicSystem::LoginHandler(std::shared_ptr<CSession> session,
     std::string token = root["token"].asString();
     std::cout << "User logining, uid: " << uid
         << ", token: " << token << std::endl;
-    Defer defer([session, &rtvalue]() {
+    Defer defer([session, &rtvalue, this]() {
         std::string jsonstr = rtvalue.toStyledString();
         session->Send(jsonstr, MSG_CHAT_LOGIN_RSP);
     });
@@ -157,6 +157,7 @@ void LogicSystem::LoginHandler(std::shared_ptr<CSession> session,
             obj["nick"] = friend_ele->_nick;
             obj["sex"] = friend_ele->_sex;
             obj["desc"] = friend_ele->_desc;
+            obj["back"] = friend_ele->_back;
             rtvalue["friend_list"].append(obj);
         }
     }
@@ -188,7 +189,7 @@ void LogicSystem::SearchInfo(std::shared_ptr<CSession> session,
     Json::Value rtvalue;
     // 这里按值捕获session可以增加shared_ptr的引用计数
     // 避免session提前释放
-    Defer defer([session, &rtvalue, &msg_id]() {
+    Defer defer([session, &rtvalue, &msg_id, this]() {
         std::string jsonstr = rtvalue.toStyledString();
         session->Send(jsonstr, ID_SEARCH_USER_RSP);
     });
@@ -303,7 +304,7 @@ void LogicSystem::AuthFriendApply(std::shared_ptr<CSession> session,
         rtvalue["error"] = ERROR_CODES::UID_INVALID;
     }
     // 将好友通过以后持久化状态位
-    MysqlMgr::GetInstance()->AddFriendApply(fromuid, touid);
+    MysqlMgr::GetInstance()->AuthFriendApply(fromuid, touid);
     // 增加好友关系
     MysqlMgr::GetInstance()->AddFriend(fromuid, touid, backname);
     // 如果在同一服务且在线则通过tcp发送给对方
@@ -374,7 +375,7 @@ void LogicSystem::DealChatTextMsg(std::shared_ptr<CSession> session,
     std::shared_ptr<ConfigMgr> cfg = ConfigMgr::GetInstance();
     std::string self_server_name = (*cfg)["SelfServer"]["Name"];
     // 获取对方所在服务
-    std::string to_ip_key = USER_BASE_INFO + std::to_string(touid);
+    std::string to_ip_key = USER_IP_PREFIX + std::to_string(touid);
     std::string to_ip_value = "";
     bool b_ip = RedisMgr::GetInstance()->Get(to_ip_key, to_ip_value);
     if (!b_ip) {

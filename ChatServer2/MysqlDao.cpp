@@ -256,7 +256,7 @@ std::shared_ptr<UserInfo> MysqlDao::GetUser(std::string name) {
         pstmt->setString(1, name);
         std::unique_ptr<sql::ResultSet> res(pstmt->executeQuery());
         std::shared_ptr<UserInfo> userinfo = nullptr;
-        while (!res->next()) {
+        while (res->next()) {
             userinfo.reset(new UserInfo);
             userinfo->_uid = res->getInt("uid");
             userinfo->_name = name;
@@ -290,7 +290,7 @@ bool MysqlDao::AddFriendApply(const int& from, const int& to) {
     try {
         std::unique_ptr<sql::PreparedStatement> pstmt(
             conn->prepareStatement(
-                "INSERT INTO friend_apply (from_uid, to_uid) values (?, ?) "
+                "INSERT INTO friend_apply (from_uid, to_uid) VALUES (?, ?) "
                 "ON DUPLICATE KEY UPDATE from_uid = from_uid, to_uid = to_uid"
             )); //如果重复了用原来的值
         pstmt->setInt(1, from);
@@ -298,6 +298,34 @@ bool MysqlDao::AddFriendApply(const int& from, const int& to) {
         // 执行更新语句
         int rowAffected = pstmt->executeUpdate();
         if (rowAffected < 0) {
+            return false;
+        }
+        return true;
+    }
+    catch (sql::SQLException& e) {
+        std::cerr << "SQLException: " << e.what();
+        std::cerr << " (MySQL error code: " << e.getErrorCode();
+        std::cerr << ", SQLState: " << e.getSQLState() << " )." << std::endl;
+        return false;
+    }
+}
+
+bool MysqlDao::AuthFriendApply(const int& from, const int& to) {
+    auto conn = _pool->GetConnection();
+    if (conn == nullptr) {
+        return false;
+    }
+    Defer defer([this, &conn]() {
+        _pool->ReturnConnection(std::move(conn));
+    });
+    try {
+        std::unique_ptr<sql::PreparedStatement> pstmt(
+            conn->prepareStatement("UPDATE friend_apply SET status = 1 WHERE from_uid = ? AND to_uid = ?"));
+        pstmt->setInt(1, to);
+        pstmt->setInt(2, from);
+        int rowAffected = pstmt->executeUpdate();
+        if (rowAffected < 0) {
+            std::cout << "error. " << std::endl;
             return false;
         }
         return true;
@@ -411,7 +439,7 @@ bool MysqlDao::GetFriendList(int self_id,
         pstmt->setInt(1, self_id);
         std::unique_ptr<sql::ResultSet> res(pstmt->executeQuery());
         while (res->next()) {
-            std::string friend_id = res->getString("friend_id");
+            int friend_id = res->getInt("friend_id");
             std::string back = res->getString("back");
             std::shared_ptr<UserInfo> userinfo = GetUser(friend_id);
             if (userinfo == nullptr) {

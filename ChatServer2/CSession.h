@@ -4,6 +4,7 @@
 #include "MsgNode.h"
 #include <string>
 #include <memory>
+#include <queue>
 #include <boost/asio.hpp>
 
 namespace net = boost::asio;
@@ -27,11 +28,15 @@ public:
     void Send(std::string msg, short msg_id);
     void Send(char* msg, short max_len, short msg_id);
     void Close();
+
+    
 private:
     void asyncReadFull(std::size_t max_len,
          std::function<void(const boost::system::error_code&, std::size_t)> handler);
     void asyncReadLen(std::size_t read_len, std::size_t total_len,
          std::function<void(const boost::system::error_code&, std::size_t)> handler);
+    void HandleWrite(const boost::system::error_code& ec,
+         std::shared_ptr<CSession> shared_self);
     // net::io_context& _ioc;
     char _data[MAX_LENGTH];
     tcp::socket _socket;
@@ -40,6 +45,8 @@ private:
     std::string _session_id;
     std::shared_ptr<RecvNode> _recv_msg_node;
     std::shared_ptr<MsgNode> _recv_head_node;
+    std::mutex _send_lock;
+    std::queue<std::shared_ptr<SendNode>> _send_que;
     int _user_uid;
 };
 

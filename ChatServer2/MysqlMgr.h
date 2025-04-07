@@ -18,6 +18,7 @@ public:
 
     bool AddFriendApply(const int& from, const int& to);
     bool AddFriend(const int& from, const int& to, std::string backname);
+    bool AuthFriendApply(const int& from, const int& to);
     bool GetApplyList(int touid, 
         std::vector<std::shared_ptr<ApplyInfo>>& apply_list, int begin, int limit = 10);
     bool GetFriendList(int self_id,

@@ -15,8 +15,8 @@
 #define MAX_LENGTH 1024*2   //报文总长度
 #define HEAD_ID_LENGTH 2    //消息id长度
 #define HEAD_DATA_LENGTH 2  //数据长度说明
-#define MAX_RECVNODE 10000  
-#define MAX_SENDNODE 10000  
+#define MAX_RECVQUE 10000  
+#define MAX_SENDQUE 1000
 
 
 enum ERROR_CODES {

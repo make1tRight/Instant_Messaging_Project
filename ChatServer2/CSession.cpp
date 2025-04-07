@@ -131,7 +131,38 @@ void CSession::AsyncReadBody(int total_len) {
 }
 
 void CSession::Send(std::string msg, short msg_id) {
+    std::lock_guard<std::mutex> lock(_send_lock);
+    int send_que_size = _send_que.size();
+    if (send_que_size > MAX_SENDQUE) {
+        std::cout << "session: " << _session_id
+            << " send queue is full, MAX_SENDQUE=" << MAX_SENDQUE << std::endl;
+        return;
+    }
+    _send_que.push(std::make_shared<SendNode>(msg.c_str(), msg.size(), msg_id));
+    if (send_que_size > 0) {
+        return;
+    }
+    auto& sendnode = _send_que.front();
+    // 这里SharedSelf防止在进行异步操作的时候session析构掉
+    net::async_write(_socket, net::buffer(sendnode->_data, sendnode->_total_len),
+        std::bind(&CSession::HandleWrite, this, std::placeholders::_1, SharedSelf()));
+}
 
+void CSession::Send(char* msg, short max_len, short msg_id) {
+    std::lock_guard<std::mutex> lock(_send_lock);
+    int send_que_size = _send_que.size();
+    if (send_que_size > MAX_SENDQUE) {
+        std::cout << "session: " << _session_id
+            << " send queue is full, MAX_SENDQUE=" << MAX_SENDQUE << std::endl;
+        return;
+    }
+    _send_que.push(std::make_shared<SendNode>(msg, max_len, msg_id));
+    if (send_que_size > 0) {
+        return;
+    }
+    auto& sendnode = _send_que.front();
+    net::async_write(_socket, net::buffer(sendnode->_data, sendnode->_total_len),
+        std::bind(&CSession::HandleWrite, this, std::placeholders::_1, SharedSelf()));
 }
 
 void CSession::Close() {
@@ -163,6 +194,28 @@ void CSession::asyncReadLen(std::size_t read_len, std::size_t total_len,
         }
         self->asyncReadLen(read_len + bytes_transferred, total_len, handler);
     });
+}
+
+void CSession::HandleWrite(const boost::system::error_code& ec,
+    std::shared_ptr<CSession> shared_self) {
+    try {
+        if (!ec) {
+            std::lock_guard<std::mutex> lock(_send_lock);
+            _send_que.pop();
+            if (!_send_que.empty()) {
+                auto& sendnode = _send_que.front();
+                net::async_write(_socket, net::buffer(sendnode->_data, sendnode->_total_len),
+                    std::bind(&CSession::HandleWrite, this, std::placeholders::_1, SharedSelf()));
+            }
+        } else {
+            std::cout << "Failed to HandleWrite, error: " << ec.message() << std::endl;
+            Close();
+            _server->ClearSession(_session_id);
+        }
+    }
+    catch (std::exception& e) {
+        std::cout << "Exception: " << e.what() << std::endl;
+    }
 }
 
 LogicNode::LogicNode(std::shared_ptr<CSession> session, std::shared_ptr<RecvNode> recvnode)
