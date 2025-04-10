@@ -3,6 +3,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
+#include <boost/dll.hpp>
 
 SectionInfo::SectionInfo() {
 
@@ -33,8 +34,9 @@ std::string SectionInfo::operator[](const std::string& key) const {
 }
 
 ConfigMgr::ConfigMgr() {
-    boost::filesystem::path project_path =
-         boost::filesystem::current_path().parent_path();
+    boost::filesystem::path project_path = boost::dll::program_location().parent_path();
+    std::cout << "project_path: " << project_path << std::endl;
+
     boost::filesystem::path config_path = project_path / "config.ini";
     std::cout << "config path: " << config_path << std::endl;
 
