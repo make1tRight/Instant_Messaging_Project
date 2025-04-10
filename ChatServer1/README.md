@@ -168,10 +168,31 @@ Other Error!
 `std::string to_ip_key = USER_IP_PREFIX + std::to_string(touid);`查错了key
 
 ## 头像无法显示(客户端)
+1. 头像路径是后面添加的, 先前缓存在redis中
+2. 获取用户信息的逻辑是先查redis后查mysql
+3. mysql中的数据更新了, 但是redis的数据还是旧的(没有头像信息), 因此不显示头像
+4. 要处理数据库与缓存的一致性问题
 
 ## 程序关闭的时候显示core dump
+1. gdb调试过程中加上`handle SIGSEGV stop print pass` -> 在core dump处停止
+2. `signal SIGTERM` 终止程序
+3. 使得core dump处可以停止 -> 查看bt
+```bash
+(gdb) bt
+#0  0x0000555555626612 in boost::asio::io_context::work::get_io_context (this=0x0)
+    at /usr/include/boost/asio/impl/io_context.hpp:428
+#1  0x0000555555620ae5 in AsioIOContextPool::Stop (this=0x555557323ce0)
+    at /home/tom/workspace/Feynman/ChatServer1/AsioIOContextPool.cpp:18
+#2  0x00005555556209d2 in AsioIOContextPool::~AsioIOContextPool (
+    this=0x555557323ce0, __in_chrg=<optimized out>
+```
+4. 发现主程序里面调用了Stop, 析构函数里面也调用了Stop -> 双重析构导致core dump
+5. 在主程序里面控制, 接收到停止信号关闭iocontext池
 
-
+## 跨服务聊天对方接收不到消息
+1. 让两个客户端都登录到1个服务上, 看是否能够收到消息
+    1. 如果能够收到, 说明服务传到客户端这个过程是通的
+    2. server2的配置文件 `[chatserver1]`写错了
 
 
 

@@ -158,7 +158,7 @@ TextChatMsgRsp ChatGrpcClient::NotifyTextChatMsg(std::string server_ip,
     ClientContext context;
     auto stub = pool->GetConnection();
     Status status = stub->NotifyTextChatMsg(&context, req, &rsp);
-    Defer deferconn([&stub, &pool]() {
+    Defer deferconn([&stub, &pool, this]() {
         pool->ReturnConnection(std::move(stub));
     });
 
