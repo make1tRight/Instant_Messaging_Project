@@ -1,4 +1,4 @@
-# ChatServer2
+# ChatServer1
 用于建立http短连接, 主要面向注册, 修改密码, 登录等功能
 ### ChatServer
 1. 服务器启动与优雅退出
@@ -49,6 +49,7 @@ IOContext连接池, 用于提升并发性能, 改善处理每个session的tcp连
         1. 如果接收方用户处于同一服务且在线则直接通过tcp发送聊天消息
         2. 如果接收方用户处于不同服务则先通过grpc通知对应服务
         3. 将消息展示给自己, 用于调试
+        4. 为了确保消息的唯一性, 客户端生成了uuid作为消息的id
 5. 与网关服务逻辑层的区别
     1. 只有1个工作线程
         1. 避免竞态条件
@@ -153,5 +154,36 @@ Error:  "The proxy type is invalid for this operation"
 Other Error!
 ```
 3. 关闭主机代理可解决以上问题
+
+## 客户端无法接收界面切换信号
+1. `CSession::Send`逻辑没有实现
+    1. 通过打印日志+tcpdump(linux)+wireshark(windows)排查
+
+## 好友申请确认后无法添加到联系人
+1. `AuthFriendApply`逻辑没有实现
+    1. 通过业务逻辑检查数据库状态位
+2. `int friend_id = res->getInt("friend_id");` 获取错了数据类型
+
+## 消息无法发送到对端
+`std::string to_ip_key = USER_IP_PREFIX + std::to_string(touid);`查错了key
+
+## 头像无法显示(客户端)
+
+## 程序关闭的时候显示core dump
+1. gdb调试过程中加上`handle SIGSEGV stop print pass` -> 在core dump处停止
+2. `signal SIGTERM` 终止程序
+3. 使得core dump处可以停止 -> 查看bt
+```bash
+(gdb) bt
+#0  0x0000555555626612 in boost::asio::io_context::work::get_io_context (this=0x0)
+    at /usr/include/boost/asio/impl/io_context.hpp:428
+#1  0x0000555555620ae5 in AsioIOContextPool::Stop (this=0x555557323ce0)
+    at /home/tom/workspace/Feynman/ChatServer1/AsioIOContextPool.cpp:18
+#2  0x00005555556209d2 in AsioIOContextPool::~AsioIOContextPool (
+    this=0x555557323ce0, __in_chrg=<optimized out>
+```
+4. 发现主程序里面调用了Stop, 析构函数里面也调用了Stop -> 双重析构导致core dump
+5. 在主程序里面控制, 接收到停止信号关闭iocontext池
+
 
 

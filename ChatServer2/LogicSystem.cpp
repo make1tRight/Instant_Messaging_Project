@@ -398,7 +398,7 @@ void LogicSystem::DealChatTextMsg(std::shared_ptr<CSession> session,
     text_msg_req.set_touid(touid);
     for (const auto& txt_obj : arrays) {
         std::string msgid = txt_obj["msgid"].asString();
-        std::string msgcontent = txt_obj["msgcontent"].asString();
+        std::string msgcontent = txt_obj["content"].asString();
         std::cout << "msgid: " << msgid << std::endl;
         std::cout << "msgcontent: " << msgcontent << std::endl;
         TextChatData* txt_msg = text_msg_req.add_testmsgs();

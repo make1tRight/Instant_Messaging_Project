@@ -1,7 +1,7 @@
 #include "AsioIOContextPool.h"
 
 AsioIOContextPool::~AsioIOContextPool() {
-    Stop();
+    // Stop();
 }
 
 io_context& AsioIOContextPool::GetIOContext() {

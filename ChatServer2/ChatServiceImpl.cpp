@@ -98,7 +98,7 @@ Status ChatServiceImpl::NotifyTextChatMsg(ServerContext* context,
     for (const auto& txt_msg : request->testmsgs()) {
         Json::Value elem;
         elem["msgid"] = txt_msg.msgid();
-        elem["msgcontent"] = txt_msg.msgcontent();
+        elem["content"] = txt_msg.msgcontent();
         text_array.append(elem);
     }
     rtvalue["text_array"] = text_array;
