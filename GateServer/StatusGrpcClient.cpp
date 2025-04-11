@@ -23,6 +23,10 @@ std::unique_ptr<StatusService::Stub> StatusConnPool::GetConnection() {
         return nullptr;
     }
     std::unique_ptr<StatusService::Stub> conn(std::move(_pool.front()));
+    if (conn == nullptr) {
+        std::cout << "Failed to get conn." << std::endl;
+        return nullptr;
+    }
     _pool.pop();
     return conn;
 }
@@ -52,8 +56,6 @@ StatusConnPool::StatusConnPool(int poolSize, std::string host, std::string port)
 }
 
 GetChatServerRsp StatusGrpcClient::GetChatServer(int uid) {
-
-    // virtual ::grpc::Status GetChatServer(::grpc::ClientContext* context, const ::message::GetChatServerReq& request, ::message::GetChatServerRsp* response) = 0;
     ClientContext context;
     GetChatServerReq request;
     GetChatServerRsp response;
@@ -67,7 +69,6 @@ GetChatServerRsp StatusGrpcClient::GetChatServer(int uid) {
 
     if (!status.ok()) {
         response.set_error(ERROR_CODES::RPC_FAILED);
-        return response;
     }
     return response;
 }

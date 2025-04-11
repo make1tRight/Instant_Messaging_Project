@@ -253,7 +253,7 @@ bool LogicSystem::HandlePost(std::string path,
 
     _post_handler[path](conn);
     return true;
-}    
+}
 
 void LogicSystem::RegisterGet(std::string url, HttpHandler handler) {
     _get_handler.insert(std::make_pair(url, handler));

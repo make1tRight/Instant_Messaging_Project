@@ -1,6 +1,7 @@
 #include "MysqlDao.h"
 #include "ConfigMgr.h"
 #include <cppconn/prepared_statement.h>
+#include "const.h"
 
 MysqlConnPool::MysqlConnPool(const std::string& url, const std::string& usr, const std::string& pwd,
     const std::string& schema, std::size_t poolSize)
@@ -81,6 +82,9 @@ int MysqlDao::UserRegister(const std::string& name,
         if (conn == nullptr) {
             return -1;
         }
+        Defer defer([this, &conn]() {
+            _pool->ReturnConnection(std::move(conn));
+        });
         std::unique_ptr<sql::PreparedStatement> stmt(
             conn->prepareStatement("CALL reg_user(?,?,?,@result)"));
         stmt->setString(1, name);
@@ -94,14 +98,14 @@ int MysqlDao::UserRegister(const std::string& name,
         if (res->next()) {
             int result = res->getInt("result");
             std::cout << "Result: " << result << std::endl;
-            _pool->ReturnConnection(std::move(conn));
+            // _pool->ReturnConnection(std::move(conn));
             return result;
         }
-        _pool->ReturnConnection(std::move(conn));
+        // _pool->ReturnConnection(std::move(conn));
         return -1;
     }
     catch (sql::SQLException& e) {
-        _pool->ReturnConnection(std::move(conn));
+        // _pool->ReturnConnection(std::move(conn));
         std::cerr << "SQLException: " << e.what();
         std::cerr << " (MySQL error code: " << e.getErrorCode();
         std::cerr << ", SQLState: " << e.getSQLState() << " )." << std::endl;
@@ -115,6 +119,9 @@ bool MysqlDao::CheckEmail(const std::string& name, const std::string& email) {
         if (conn == nullptr) {
             return false;
         }
+        Defer defer([this, &conn]() {
+            _pool->ReturnConnection(std::move(conn));
+        });
         std::unique_ptr<sql::PreparedStatement> stmt(
             conn->prepareStatement("SELECT email FROM user WHERE name = ?"));
         stmt->setString(1, name);
@@ -123,16 +130,16 @@ bool MysqlDao::CheckEmail(const std::string& name, const std::string& email) {
         while (res->next()) {
             std::cout << "Check email: " << res->getString("email") << std::endl;
             if (email != res->getString("email")) {
-                _pool->ReturnConnection(std::move(conn));
+                // _pool->ReturnConnection(std::move(conn));
                 return false;
             }
-            _pool->ReturnConnection(std::move(conn));
+            // _pool->ReturnConnection(std::move(conn));
             return true;
         }
         return false;
     }
     catch (sql::SQLException& e) {
-        _pool->ReturnConnection(std::move(conn));
+        // _pool->ReturnConnection(std::move(conn));
         std::cerr << "SQLException: " << e.what();
         std::cerr << " (MySQL error code: " << e.getErrorCode();
         std::cerr << ", SQLState: " << e.getSQLState() << " )." << std::endl;
@@ -146,6 +153,9 @@ bool MysqlDao::UpdatePwd(const std::string& name, const std::string& pwd) {
         if (conn == nullptr) {
             return false;
         }
+        Defer defer([this, &conn]() {
+            _pool->ReturnConnection(std::move(conn));
+        });
         std::unique_ptr<sql::PreparedStatement> pstmt(
             conn->prepareStatement("UPDATE user SET pwd = ? WHERE name = ?"));
         pstmt->setString(2, name);
@@ -154,11 +164,11 @@ bool MysqlDao::UpdatePwd(const std::string& name, const std::string& pwd) {
         int update_count = pstmt->executeUpdate();
         std::cout << "Update rows: " << update_count << std::endl;
         std::cout << "new password: " << pwd << std::endl;
-        _pool->ReturnConnection(std::move(conn));
+        // _pool->ReturnConnection(std::move(conn));
         return true;
     }
     catch (sql::SQLException& e) {
-        _pool->ReturnConnection(std::move(conn));
+        // _pool->ReturnConnection(std::move(conn));
         std::cerr << "SQLException: " << e.what();
         std::cerr << " (MySQL error code: " << e.getErrorCode();
         std::cerr << ", SQLState: " << e.getSQLState() << " )." << std::endl;
@@ -172,6 +182,9 @@ bool MysqlDao::CheckPwd(const std::string& email, const std::string& pwd, UserIn
         if (conn == nullptr) {
             return false;
         }
+        Defer defer([this, &conn]() {
+            _pool->ReturnConnection(std::move(conn));
+        });
         std::unique_ptr<sql::PreparedStatement> pstmt(conn->prepareStatement(
             "SELECT * FROM user WHERE email = ?"));
         pstmt->setString(1, email);
@@ -192,7 +205,7 @@ bool MysqlDao::CheckPwd(const std::string& email, const std::string& pwd, UserIn
         return true;
     }
     catch (sql::SQLException& e) {
-        _pool->ReturnConnection(std::move(conn));
+        // _pool->ReturnConnection(std::move(conn));
         std::cerr << "SQLException: " << e.what();
         std::cerr << " (MySQL error code: " << e.getErrorCode();
         std::cerr << ", SQLState: " << e.getSQLState() << " )." << std::endl;

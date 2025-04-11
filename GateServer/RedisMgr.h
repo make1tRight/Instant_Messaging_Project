@@ -31,7 +31,6 @@ class RedisMgr : public Singleton<RedisMgr>,
     friend class Singleton<RedisMgr>;
 public:
     ~RedisMgr();
-    bool Connect(const std::string& host, int port);
     bool Auth(const std::string& passwd);
     bool Get(const std::string& key, std::string& value);
     bool Set(const std::string& key, const std::string& value);
@@ -50,8 +49,6 @@ public:
     void Close();
 private:
     RedisMgr();
-    redisContext* _context;
-    redisReply* _reply;
     std::unique_ptr<RedisConnPool> _conn_pool;
 };
 #endif // REDISMGR_H

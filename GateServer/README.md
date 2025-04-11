@@ -136,3 +136,11 @@ ALTER TABLE `user` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 ```
 
 ## 连接多了会阻塞, 重启后能够自动接收消息
+1. 通过locust压力测试建立连接 `python -m locust -f .\chatroom_pressure_test.py`
+2. 在`RegisterPost("/user_login", [](std::shared_ptr<HttpConnection> conn) {`加入断点
+3. 发现执行语句`bool pwd_valid =  MysqlMgr::GetInstance()->CheckPwd(email, passwd, userinfo);`阻塞
+4. MySQL中使用`SHOW STATUS LIKE 'Threads_connected'`发现每建立一次http连接就少一个mysql连接
+5. 检查得知CheckPwd没有写连接放回池子的逻辑 
+
+**使用defer机制释放连接**
+1. MySQL中使用`SHOW STATUS LIKE 'Threads_connected'`验证没有问题
