@@ -51,8 +51,6 @@ public:
     void Close();
 private:
     RedisMgr();
-    redisContext* _context;
-    redisReply* _reply;
     std::unique_ptr<RedisConnPool> _conn_pool;
 };
 #endif // REDISMGR_H
