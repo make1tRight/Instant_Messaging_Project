@@ -34,8 +34,6 @@ public:
 
     virtual Status GetChatServer(ServerContext* context,
          const GetChatServerReq* request, GetChatServerRsp* response) override;
-    virtual Status Login(ServerContext* context,
-         const LoginReq* request, LoginRsp* response) override;
 private:
     void insertToken(int uid, std::string token);
     ChatServer getChatServer();
